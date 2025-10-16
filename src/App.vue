@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import AgentInfo from './components/AgentInfo.vue';
-import { useAgentStore } from './stores/agent';
 import { storeToRefs } from 'pinia'
+import AgentInfo from './components/AgentInfo.vue'
+import { useAgentStore } from './stores/agent'
 
 const agentStore = useAgentStore()
 const { isAuthenticated } = storeToRefs(agentStore)
