@@ -18,11 +18,9 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
     "@tanstack/vue-query": "^5.90.3",
-    "ofetch": "^1.4.1",
     "pinia": "^3.0.3",
     "tailwindcss": "^4.1.14",
     "typed-openapi": "^2.2.2",
-    "ufo": "^1.6.1",
     "vue": "^3.5.22",
     "vue-router": "^4.5.1"
   },
