@@ -1,4 +1,5 @@
 import type { Fetcher } from '@/spec.yml.client'
+import { useCookies } from '@vueuse/integrations/useCookies'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { createApiClient } from '@/spec.yml.client'
@@ -6,7 +7,8 @@ import { createApiClient } from '@/spec.yml.client'
 const API_BASE_URL = 'https://api.spacetraders.io/v2'
 
 export const useAgentStore = defineStore('agent', () => {
-  const token = ref<string | undefined>(undefined)
+  const cookies = useCookies(['space-token'])
+  const token = ref<string | undefined>(cookies.get('space-token'))
   const isAuthenticated = computed(() => token.value !== undefined)
 
   function promptForToken() {
@@ -14,7 +16,13 @@ export const useAgentStore = defineStore('agent', () => {
     const newToken = prompt('Bitte gebe deinen Agent Token ein:')
     if (newToken !== null) {
       token.value = newToken
+      cookies.set('space-token', newToken)
     }
+  }
+
+  function logout() {
+    cookies.remove('space-token')
+    token.value = undefined
   }
 
   const defaultFetcher: Fetcher['fetch'] = async (input) => {
@@ -61,6 +69,7 @@ export const useAgentStore = defineStore('agent', () => {
   return {
     token,
     promptForToken,
+    logout,
     isAuthenticated,
     agentApi,
   }

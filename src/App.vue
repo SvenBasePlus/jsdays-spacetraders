@@ -26,5 +26,9 @@ const { isAuthenticated } = storeToRefs(agentStore)
     </p>
 
     <AgentInfo />
+
+    <button class="bg-blue-300 px-4 py-2 rounded text-white" @click="agentStore.logout()">
+      Abmelden
+    </button>
   </div>
 </template>
