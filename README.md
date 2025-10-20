@@ -1,27 +1,10 @@
-# jsdays-spacetraders
+# JS-Days SpaceTraders workshop
 
-This template should help get you started developing with Vue 3 in Vite.
+Baue deine erste praxisnahe App: ein Weltraum-Idle-Spiel, in dem du Flotten verwalten, Aufträge abschließen und Ressourcen handeln kannst. Du lernst, wie man ein Vue.js-Projekt aufsetzt, den Zustand der Anwendung mit Pinia verwaltet, das Routing mit Vue Router umsetzt und interaktive UI-Komponenten erstellt. Am Ende des Workshops wirst du eine voll funktionsfähige App mit nach Hause nehmen – und ein solides Verständnis der wichtigsten Vue.js-Konzepte haben!
 
-## Recommended IDE Setup
+## IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
 
 ## Project Setup
 
