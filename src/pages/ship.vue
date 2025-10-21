@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui/components/Table.vue'
 import type { Schemas } from '@/spec.yml.client.ts'
-import { useQuery } from '@tanstack/vue-query'
-import {computed, h, ref, resolveComponent} from 'vue'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/vue-query'
+import {capitalize, computed, h, ref, resolveComponent} from 'vue'
 import { useRoute } from 'vue-router'
 import { useAgentStore } from '@/stores/agent.ts'
 
@@ -34,6 +34,29 @@ const query = useQuery({
   queryKey: ['ships', route.params.id],
 })
 
+const queryClient = useQueryClient();
+const shipOrbitMutation = useMutation({
+  mutationFn: () => store.agentApi.post('/my/ships/{shipSymbol}/orbit', {
+    path: {
+      shipSymbol: route.params.id as string,
+    },
+  }),
+  onSuccess: () => {
+    return queryClient.invalidateQueries({ queryKey: ['ships', route.params.id] })
+  },
+})
+
+const shipDockMutation = useMutation({
+  mutationFn: () => store.agentApi.post('/my/ships/{shipSymbol}/dock', {
+    path: {
+      shipSymbol: route.params.id as string,
+    },
+  }),
+  onSuccess: () => {
+    return queryClient.invalidateQueries({ queryKey: ['ships', route.params.id] })
+  },
+})
+
 const shipSections = [
   {
     label: 'Navigation',
@@ -45,7 +68,24 @@ const shipSections = [
     icon: 'i-lucide-package',
     slot: 'cargo',
   },
+  {
+    label: 'Modules',
+    icon: 'i-lucide-puzzle',
+    slot: 'modules',
+  },
+  {
+    label: 'Misc',
+    icon: 'i-lucide-align-justify',
+    slot: 'misc',
+  },
 ]
+
+const modules = computed(() => {
+  if (!query.data.value?.data) {
+    return null
+  }
+  return query.data.value?.data.modules
+})
 
 const systemSymbol = computed(() => {
   if (!query.data.value?.data) {
@@ -137,91 +177,136 @@ const waypointsColumns: TableColumn<Schemas.Waypoint>[] = [
 
     <USeparator />
 
-    <UTabs :items="shipSections">
+    <UTabs class="items-start" orientation="vertical" variant="link" :items="shipSections">
       <template #navigation>
-        <p>wuhu!</p>
+        <div class="space-y-4">
+          <UCard>
+            <template #header>
+              <h2 class="text-lg font-semibold">
+                Actions
+              </h2>
+            </template>
+
+            <div class="flex items-center gap-2">
+              <UButton color="primary" label="Launch to Orbit" :disabled="query.data.value?.data.nav.status === 'IN_ORBIT'" @click="shipOrbitMutation.mutate()" />
+              <UButton color="primary" label="Dock Ship" :disabled="query.data.value?.data.nav.status === 'DOCKED'" @click="shipDockMutation.mutate()" />
+            </div>
+          </UCard>
+
+          <UCard>
+            <template #header>
+              <h2 class="text-lg font-semibold">
+                Current Route
+              </h2>
+            </template>
+
+            <ul>
+              <li>Starting location: {{ query.data.value?.data.nav.route.origin }}</li>
+              <li>Target location: {{ query.data.value?.data.nav.route.destination }}</li>
+              <li>Departure: {{ query.data.value?.data.nav.route.departureTime }}</li>
+              <li>Arrival: {{ query.data.value?.data.nav.route.arrival }}</li>
+            </ul>
+          </UCard>
+
+          <UCard>
+            <template #header>
+              <h2 class="text-lg font-semibold">
+                Possible Waypoints
+              </h2>
+            </template>
+
+            <UTable :data="waypoints" :columns="waypointsColumns" :loading="systemQuery.isFetching" />
+          </UCard>
+        </div>
       </template>
 
       <template #cargo>
-        <h2>Cargo</h2>
+        <UCard>
+          <template #header>
+            <h2 class="text-lg font-semibold">
+              Cargo
+            </h2>
+
+            <div>
+              <UProgress :model-value="query.data.value?.data.cargo.units" :max="query.data.value?.data.cargo.capacity" status />
+
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-sm text-gray-500">0</span>
+                <span class="text-sm text-gray-500">{{ query.data.value?.data.cargo.capacity }}</span>
+              </div>
+            </div>
+          </template>
+
+          <ul>
+            <li>
+              Empty
+            </li>
+          </ul>
+        </UCard>
+      </template>
+
+      <template #modules>
+        <div class="grid grid-cols-3 gap-4">
+          <UCard v-for="module in modules" :key="module.symbol">
+            <template #header>
+              {{ module.name }}
+            </template>
+
+            <div class="space-y-3">
+              <p>{{ module.description }}</p>
+
+              <p class="font-semibold mb-1">Requirements</p>
+
+              <ul>
+                <li v-for="(req_value, req_name) in module.requirements" :key="req_name">
+                  {{ capitalize(req_name) }}: {{ req_value }}
+                </li>
+              </ul>
+            </div>
+          </UCard>
+        </div>
+      </template>
+
+      <template #misc>
+        <UCard v-if="query.data.value?.data.crew.capacity > 0">
+          <template #header>
+            <h2 class="text-lg font-semibold">
+              Crew
+            </h2>
+
+            <div>
+              <UProgress :model-value="query.data.value?.data.crew.current" :max="query.data.value?.data.crew.capacity">
+                <template #status>
+                  {{ query.data.value?.data.crew.current }}
+                </template>
+              </UProgress>
+
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-sm text-gray-500">0</span>
+                <span class="text-sm text-gray-500">{{ query.data.value?.data.crew.capacity }}</span>
+              </div>
+            </div>
+          </template>
+
+          <ul>
+            <li>
+              Rotation type: {{ query.data.value?.data.crew.rotation }}
+            </li>
+            <li>
+              Current morale: {{ query.data.value?.data.crew.morale }}
+            </li>
+            <li>
+              Current wages: {{ query.data.value?.data.crew.wages }}
+            </li>
+          </ul>
+        </UCard>
       </template>
     </UTabs>
 
-    <div class="grid grid-cols-2 gap-4">
-      <UCard v-if="query.data.value?.data.crew.capacity > 0">
-        <template #header>
-          <h2 class="text-lg font-semibold">
-            Crew
-          </h2>
-
-          <div>
-            <UProgress :model-value="query.data.value?.data.crew.current" :max="query.data.value?.data.crew.capacity" status />
-
-            <div class="flex justify-between items-center mt-2">
-              <span class="text-sm text-gray-500">0</span>
-              <span class="text-sm text-gray-500">{{ query.data.value?.data.crew.capacity }}</span>
-            </div>
-          </div>
-        </template>
-
-        <ul>
-          <li>
-            Rotation type: {{ query.data.value?.data.crew.rotation }}
-          </li>
-          <li>
-            Current morale: {{ query.data.value?.data.crew.morale }}
-          </li>
-          <li>
-            Current wages: {{ query.data.value?.data.crew.wages }}
-          </li>
-        </ul>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <h2 class="text-lg font-semibold">
-            Cargo
-          </h2>
-
-          <div>
-            <UProgress :model-value="query.data.value?.data.cargo.units" :max="query.data.value?.data.cargo.capacity" status />
-
-            <div class="flex justify-between items-center mt-2">
-              <span class="text-sm text-gray-500">0</span>
-              <span class="text-sm text-gray-500">{{ query.data.value?.data.cargo.capacity }}</span>
-            </div>
-          </div>
-        </template>
-
-        <ul>
-          <li>
-            Empty
-          </li>
-        </ul>
-      </UCard>
-    </div>
-
     <USeparator />
 
     <div class="space-y-2">
-      <h2 class="text-lg font-semibold">
-        Current Route
-      </h2>
 
-      <ul>
-        <li>Starting location: {{ query.data.value?.data.nav.route.origin }}</li>
-        <li>Target location: {{ query.data.value?.data.nav.route.destination }}</li>
-        <li>Departure: {{ query.data.value?.data.nav.route.departureTime }}</li>
-        <li>Arrival: {{ query.data.value?.data.nav.route.arrival }}</li>
-      </ul>
-    </div>
-
-    <USeparator />
-
-    <div class="space-y-2">
-      <h2 class="text-lg font-semibold">
-        Possible Waypoints
-      </h2>
 
       <!--      <ul>
         <li v-for="waypoint in systemQuery.data.value?.data" :key="waypoint.symbol">
@@ -229,12 +314,9 @@ const waypointsColumns: TableColumn<Schemas.Waypoint>[] = [
         </li>
       </ul> -->
 
-      <UTable :data="waypoints" :columns="waypointsColumns" :loading="systemQuery.isFetching" />
 
-      <pre>{{ waypoints }}</pre>
+<!--      <pre>{{ waypoints }}</pre>-->
     </div>
-
-    <USeparator />
 
     <pre>{{ query.data.value?.data }}</pre>
   </div>
