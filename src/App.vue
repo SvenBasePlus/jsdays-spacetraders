@@ -6,7 +6,7 @@ import AppSidebar from '@/components/App/Sidebar.vue'
 <template>
   <UApp>
     <AppHeader />
-    <AppSidebar />
+<!--    <AppSidebar />-->
     <UMain>
       <UContainer>
         <RouterView />
